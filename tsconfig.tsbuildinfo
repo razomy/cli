@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/commands/cli/add.ts","./src/commands/cli/list.ts","./src/commands/cli/remove.ts","./src/commands/run/index.ts"],"version":"5.9.3"}
