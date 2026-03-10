@@ -1,8 +1,6 @@
 name: tests
 on:
-  push:
-    branches-ignore: [main]
-  workflow_dispatch:
+  push
 
 jobs:
   unit-tests:
