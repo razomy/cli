@@ -36,3 +36,27 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.deb
+      - name: Setup Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+      - name: Update Homebrew Tap Natively
+        env:
+          # Токен нужен Homebrew для скачивания релизов без лимитов API
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Твой токен с правами на запись в репозиторий homebrew-tap
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          
+          # 1. Подключаем твой tap локально прямо внутри раннера
+          brew tap razomy/tap https://${TAP_GITHUB_TOKEN}@github.com/razomy/homebrew-tap.git
+          
+          # 2. ПРОИСХОДИТ МАГИЯ: Homebrew сам качает 4 архива, считает хэши и обновляет файл
+          # Флаг --write-only говорит ему просто обновить файл, не создавая веток.
+          brew bump-formula-pr --write-only --version=${VERSION} razomy
+          
+          # 3. Идем в папку с tap-ом, коммитим готовый файл и пушим напрямую в main
+          cd $(brew --repo razomy/tap)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "Bump razomy to ${VERSION}"
+          git push
