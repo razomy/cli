@@ -4,6 +4,10 @@ on:
   release:
     types: [released]
 
+permissions:
+  contents: write    # Право на создание релиза в GitHub
+  id-token: write    # МАГИЯ OIDC: Право получать "паспорт" от GitHub
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -12,10 +16,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: latest
+          registry-url: 'https://registry.npmjs.org'
       - run: npm install
       - run: npm run build
       - run: npm run prepack
       - run: npm publish --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run postpack
       - name: Pack Tarballs
         run: npx oclif pack:tarballs
