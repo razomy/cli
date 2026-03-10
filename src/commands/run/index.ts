@@ -1,3 +1,4 @@
+/* eslint-disable no-return-await,@typescript-eslint/no-explicit-any */
 import {input, search, select} from '@inquirer/prompts';
 import {Args, Command} from '@oclif/core';
 import {existsSync, readFileSync} from 'node:fs';
@@ -9,7 +10,7 @@ export interface FunctionSpecification {
   examples: { code: string; expected: string; }[];
   name: string;
   parameters: { description: string; name: string; type: string; }[];
-  performance: { history: any[]; memoryDataSizeComplexityFn: string; timeDataSizeComplexityFn: string; };
+  performance: { history: never[]; memoryDataSizeComplexityFn: string; timeDataSizeComplexityFn: string; };
   returns: { description: string; type: string; };
   title: string;
 }
@@ -48,7 +49,7 @@ export default class RunCommand extends Command {
 
       // 6. Execute
       await this.executeFunction(importPath, functionNameToRun, finalParams);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Pass a default string if targetModulePath wasn't determined yet
       this.handleExecutionError(error, args.modulePath || 'Unknown Module');
     }
@@ -61,13 +62,14 @@ export default class RunCommand extends Command {
     if (spec && spec.parameters.length > 0) {
       this.log('⚙️  Collecting parameters:');
 
-      for (let i = 0; i < spec.parameters.length; i++) {
+     for (let i = 0; i < spec.parameters.length; i++) {
         const paramDef = spec.parameters[i];
 
         if (args[i]) {
           this.log(`✔ ${paramDef.name} = ${args[i]}`);
           finalParams.push(args[i]);
         } else {
+          // eslint-disable-next-line no-await-in-loop
           const answer = await input({
             message: `${paramDef.description} Type "${paramDef.type}".\n Enter <${paramDef.name}>:`
           });
@@ -207,6 +209,7 @@ export default class RunCommand extends Command {
       moduleDir = dirname(absolutePath);
     } else {
       try {
+        // eslint-disable-next-line no-undef
         const packageJsonPath = require.resolve(`${modulePath}/package.json`, {paths: [process.cwd()]});
         moduleDir = dirname(packageJsonPath);
       } catch {

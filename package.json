@@ -1,7 +1,7 @@
 {
   "name": "@razomy/cli",
   "description": "A new CLI generated with oclif",
-  "version": "0.0.0-alpha.1",
+  "version": "0.0.0-alpha.2",
   "author": "Yevhenii Kamenskyi",
   "bin": {
     "razomy": "./bin/run.js",

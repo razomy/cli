@@ -2,7 +2,7 @@
 set -e
 
 REPO="razomy/cli"
-VERSION="0.0.0-alpha.1"
+VERSION="0.0.0-alpha.2"
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"

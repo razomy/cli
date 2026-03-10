@@ -15,7 +15,7 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run prepack
-      - run: npm publish --latest
+      - run: npm publish --tag latest
       - run: npm run postpack
       - name: Pack Tarballs
         run: npx oclif pack:tarballs

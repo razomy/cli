@@ -1,4 +1,4 @@
-import {Args, Command} from '@oclif/core';
+import {Command} from '@oclif/core';
 import {execSync} from 'node:child_process';
 
 export default class ListCommand extends Command {
