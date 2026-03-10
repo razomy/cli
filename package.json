@@ -7,7 +7,10 @@
     "razomy": "./bin/run.js",
     "rr": "bin/r-run.js"
   },
-  "bugs": "https://github.com/cli.chunk/cli/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": "https://github.com/razomy/cli/issues",
   "dependencies": {
     "@inquirer/prompts": "^8.3.0",
     "@oclif/core": "^4",
@@ -40,7 +43,7 @@
     "./dist",
     "./oclif.manifest.json"
   ],
-  "homepage": "https://github.com/cli.chunk/cli",
+  "homepage": "https://github.com/razomy/cli",
   "keywords": [
     "oclif"
   ],
