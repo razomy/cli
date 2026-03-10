@@ -20,9 +20,9 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run prepack
-      - run: npm publish --tag latest
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - run: npm publish --tag latest
+#        env:
+#          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run postpack
       - name: Pack Tarballs
         run: npx oclif pack:tarballs
