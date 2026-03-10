@@ -2,6 +2,9 @@
 import {input, search, select} from '@inquirer/prompts';
 import {Args, Command} from '@oclif/core';
 import {existsSync, readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+// eslint-disable-next-line unicorn/import-style
+import * as path from 'node:path';
 import {dirname, join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
@@ -48,7 +51,8 @@ export default class RunCommand extends Command {
       const finalParams = await this.collectParameters(selectedSpec, remainingArgs);
 
       // 6. Execute
-      await this.executeFunction(importPath, functionNameToRun, finalParams);
+      const fileUrl = await this.createExecutor(importPath, moduleDir);
+      await this.executeFunction(fileUrl, functionNameToRun, finalParams);
     } catch (error: unknown) {
       // Pass a default string if targetModulePath wasn't determined yet
       this.handleExecutionError(error, args.modulePath || 'Unknown Module');
@@ -62,7 +66,7 @@ export default class RunCommand extends Command {
     if (spec && spec.parameters.length > 0) {
       this.log('⚙️  Collecting parameters:');
 
-     for (let i = 0; i < spec.parameters.length; i++) {
+      for (let i = 0; i < spec.parameters.length; i++) {
         const paramDef = spec.parameters[i];
 
         if (args[i]) {
@@ -81,6 +85,28 @@ export default class RunCommand extends Command {
     }
 
     return finalParams;
+  }
+
+  private async createExecutor(importPath: string, moduleDir: string) {
+    let exactFileUrl: string;
+
+    try {
+      // 1. Create a custom Node resolver that acts as if it's inside `moduleDir`
+      // We add 'dummy.js' so Node treats moduleDir as the folder path.
+      const customRequire = createRequire(path.resolve(moduleDir, 'executor.js'));
+
+      // 2. Let Node figure out the EXACT file (this automatically reads package.json, finds index.cjs, etc.)
+      const exactFilePath = customRequire.resolve(importPath);
+
+      // 3. Convert that exact file path to a file:// URL
+      exactFileUrl = pathToFileURL(exactFilePath).href;
+    } catch {
+      // Fallback: Just in case it's a raw local path that customRequire couldn't resolve
+      const absolutePath = path.resolve(moduleDir, importPath);
+      exactFileUrl = pathToFileURL(absolutePath).href;
+    }
+
+    return exactFileUrl;
   }
 
   private async determineModulePath(providedArg?: string): Promise<string> {
@@ -121,7 +147,7 @@ export default class RunCommand extends Command {
 
   // --- 6. EXECUTION ---
   private async executeFunction(importPath: string, functionNameToRun: string, finalParams: string[]): Promise<void> {
-    const dynamicModule = await import(importPath);
+    const dynamicModule = await import(importPath, {});
 
     this.log('🚀 Executing...');
 
@@ -146,7 +172,9 @@ export default class RunCommand extends Command {
   private getInstalledPackages(): string[] {
     const packages = new Set<string>();
     try {
-      const pkgPath = join(process.cwd(), 'package.json');
+      const cliDataDir = this.config.dataDir + '/npm';
+
+      const pkgPath = join(cliDataDir, 'package.json');
       if (existsSync(pkgPath)) {
         const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
         // Grab standard and dev dependencies
@@ -202,18 +230,19 @@ export default class RunCommand extends Command {
   private resolveModulePaths(modulePath: string): { importPath: string; moduleDir: string } {
     let importPath = modulePath;
     let moduleDir = '';
+    const cliDataDir = this.config.dataDir + '/npm';
 
     if (importPath.startsWith('.') || importPath.startsWith('/')) {
-      const absolutePath = resolve(process.cwd(), importPath);
+      const absolutePath = resolve(cliDataDir, importPath);
       importPath = pathToFileURL(absolutePath).href;
       moduleDir = dirname(absolutePath);
     } else {
       try {
         // eslint-disable-next-line no-undef
-        const packageJsonPath = require.resolve(`${modulePath}/package.json`, {paths: [process.cwd()]});
+        const packageJsonPath = require.resolve(`${modulePath}/package.json`, {paths: [cliDataDir]});
         moduleDir = dirname(packageJsonPath);
       } catch {
-        moduleDir = resolve(process.cwd(), 'node_modules', modulePath);
+        moduleDir = resolve(cliDataDir, 'node_modules', modulePath);
       }
     }
 
