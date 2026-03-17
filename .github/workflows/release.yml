@@ -2,7 +2,7 @@ name: publish
 
 on:
   release:
-    types: [released]
+    types: [ released ]
 
 permissions:
   contents: write    # Право на создание релиза в GitHub

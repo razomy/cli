@@ -9,7 +9,7 @@ import { createExecutor } from './src/module-resolution.js';
 import {resolveModulePaths} from "./src/resolve-module-paths.js";
 import { selectFunction } from './src/spec-handling.js';
 
-export default class RunCommand extends Command {
+export default class IoCommand extends Command {
   static args = {
     modulePath: Args.string({
       description: 'Path to a local file or npm package name',
@@ -20,7 +20,7 @@ export default class RunCommand extends Command {
   static strict = false; // Allow any number of arguments
 
   async run(): Promise<void> {
-    const {args, argv} = await this.parse(RunCommand);
+    const {args, argv} = await this.parse(IoCommand);
     const dynamicArgs = argv.slice(1) as string[];
     const cliDataDir = this.config.dataDir + '/npm';
 

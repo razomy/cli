@@ -4,10 +4,7 @@
   "version": "0.0.0-alpha.3",
   "author": "Yevhenii Kamenskyi",
   "bin": {
-    "razomy": "bin/run.js",
-    "r": "bin/run.js",
-    "rr": "bin/rr.js",
-    "ra": "bin/ra.js"
+    "razomy": "bin/run.js"
   },
   "publishConfig": {
     "access": "public"
@@ -58,8 +55,6 @@
     "dirname": "razomy",
     "commands": "./dist/commands",
     "binAliases": [
-      "rr",
-      "ra"
     ],
     "plugins": [],
     "targets": [
@@ -71,7 +66,7 @@
     ],
     "topicSeparator": " ",
     "topics": {
-      "run": {
+      "io": {
         "description": "Run npm packages commands"
       },
       "ai": {
