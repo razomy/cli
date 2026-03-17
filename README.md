@@ -20,7 +20,7 @@ $ npm install -g @razomy/cli
 $ razomy COMMAND
 running command...
 $ razomy (--version)
-@razomy/cli/0.0.0-alpha.1 darwin-x64 node-v24.5.0
+@razomy/cli/0.0.0-alpha.3 darwin-arm64 node-v24.14.0
 $ razomy --help [COMMAND]
 USAGE
   $ razomy COMMAND
@@ -49,7 +49,7 @@ DESCRIPTION
   Installs an npm package for dynamic use
 ```
 
-_See code: [src/commands/cli/add.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.1/src/commands/cli/add.ts)_
+_See code: [src/commands/cli/add.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.3/src/commands/cli/add.ts)_
 
 ## `razomy cli list`
 
@@ -63,7 +63,7 @@ DESCRIPTION
   List an npm packages
 ```
 
-_See code: [src/commands/cli/list.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.1/src/commands/cli/list.ts)_
+_See code: [src/commands/cli/list.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.3/src/commands/cli/list.ts)_
 
 ## `razomy cli remove PACKAGENAME`
 
@@ -80,7 +80,7 @@ DESCRIPTION
   Uninstalls an npm package
 ```
 
-_See code: [src/commands/cli/remove.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.1/src/commands/cli/remove.ts)_
+_See code: [src/commands/cli/remove.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.3/src/commands/cli/remove.ts)_
 
 ## `razomy run [MODULEPATH]`
 
@@ -97,5 +97,5 @@ DESCRIPTION
   Dynamically executes a function from a JS module with autocomplete and prompts
 ```
 
-_See code: [src/commands/run/index.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.1/src/commands/run/index.ts)_
+_See code: [src/commands/run/index.ts](https://github.com/razomy/cli/blob/v0.0.0-alpha.3/src/commands/run/index.ts)_
 <!-- commandsstop -->

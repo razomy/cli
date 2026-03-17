@@ -4,8 +4,10 @@
   "version": "0.0.0-alpha.3",
   "author": "Yevhenii Kamenskyi",
   "bin": {
-    "razomy": "./bin/run.js",
-    "rr": "bin/r-run.js"
+    "razomy": "bin/run.js",
+    "r": "bin/run.js",
+    "rr": "bin/rr.js",
+    "ra": "bin/ra.js"
   },
   "publishConfig": {
     "access": "public"
@@ -16,7 +18,8 @@
     "@oclif/core": "^4",
     "@oclif/plugin-autocomplete": "^3.2.40",
     "@oclif/plugin-help": "^6",
-    "@oclif/plugin-plugins": "^5.4.58"
+    "@oclif/plugin-plugins": "^5.4.58",
+    "npm": "^11.11.1"
   },
   "devDependencies": {
     "@eslint/compat": "^1",
