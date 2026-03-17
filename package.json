@@ -74,6 +74,9 @@
       "run": {
         "description": "Run npm packages commands"
       },
+      "ai": {
+        "description": "Run ai agent to execute commands"
+      },
       "cli": {
         "description": "Install npm packages"
       }
