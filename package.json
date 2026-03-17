@@ -58,7 +58,8 @@
     "dirname": "razomy",
     "commands": "./dist/commands",
     "binAliases": [
-      "rr"
+      "rr",
+      "ra"
     ],
     "plugins": [],
     "targets": [

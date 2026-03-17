@@ -2,7 +2,7 @@ import {Args, Command} from '@oclif/core';
 import {execSync} from 'node:child_process';
 import * as fs from 'node:fs';
 import {createRequire} from 'node:module';
-import * as path from 'node:path';
+import path from 'node:path';
 
 
 const require = createRequire(import.meta.url);
