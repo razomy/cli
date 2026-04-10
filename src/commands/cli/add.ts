@@ -1,54 +1,93 @@
-import {Args, Command} from '@oclif/core';
+import {Args, Command, Flags} from '@oclif/core';
 import {execSync} from 'node:child_process';
 import * as fs from 'node:fs';
 import {createRequire} from 'node:module';
 import path from 'node:path';
 
-// Создаем require для работы в ESM/TS окружении
 const require = createRequire(import.meta.url);
 
 export default class InstallCommand extends Command {
-  static args = {
-    packageName: Args.string({
-      description: 'The npm package name',
-      required: true,
-    }),
-  };
-  static description = 'Installs an npm package for dynamic use';
+    static args = {
+        packageName: Args.string({
+            description: 'Name of the package (e.g. @razomy/string-case)',
+            required: true,
+        }),
+    };
+    static description = 'Installs a package';
+    static flags = {
+        env: Flags.string({
+            char: 'e',
+            default: 'node',
+            description: 'Target environment (node, python, java)',
+            options: ['node', 'python', 'java'],
+        }),
+    };
 
-  async run(): Promise<void> {
-    const {args} = await this.parse(InstallCommand);
-    this.log(`⏳ Installing package ${args.packageName}...`);
+    async run(): Promise<void> {
+        const {args, flags} = await this.parse(InstallCommand);
+        const envDir = path.join(this.config.dataDir, 'environments', flags.env);
 
-    const cliDataDir = path.join(this.config.dataDir, 'npm');
+        if (!fs.existsSync(envDir)) {
+            fs.mkdirSync(envDir, {recursive: true});
+        }
 
-    // Создаем папку, если её нет
-    if (!fs.existsSync(cliDataDir)) {
-      fs.mkdirSync(cliDataDir, {recursive: true});
+        this.log(`⏳ Installing [${flags.env}] package: ${args.packageName}...`);
+
+        try {
+            switch (flags.env) {
+                case 'java': {
+                    this.installJava(args.packageName, envDir);
+
+                    break;
+                }
+
+                case 'node': {
+                    this.installNode(args.packageName, envDir);
+
+                    break;
+                }
+
+                case 'python': {
+                    this.installPython(args.packageName, envDir);
+
+                    break;
+                }
+
+                default: {
+                    throw new Error(`${flags.env} ${args.packageName} doesn't exist`);
+                }
+            }
+
+            this.log(`✅ Package ${args.packageName} installed successfully in ${envDir}!`);
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            this.error(`❌ Error installing package: ${msg}`);
+        }
     }
 
-    try {
-      // 1. process.execPath — это абсолютный путь к Node.js,
-      // который выполняет текущий код (внутри вашей чистой Ubuntu это будет Node из архива).
-      const nodeExecutable = process.execPath;
-
-      // 2. Находим путь к файлу запуска npm внутри наших собственных node_modules
-      const npmMainPath = require.resolve('npm'); // найдет node_modules/npm/index.js
-      const npmCliPath = path.join(path.dirname(npmMainPath), 'bin', 'npm-cli.js');
-
-      // 3. Формируем команду вида: /path/to/node /path/to/npm-cli.js install <пакет>
-      // Оборачиваем пути в кавычки на случай пробелов в путях
-      const command = `"${nodeExecutable}" "${npmCliPath}" install ${args.packageName}`;
-
-      // 4. Запускаем!
-      execSync(command, {
-        cwd: cliDataDir,
-        stdio: 'inherit'
-      });
-
-      this.log(`✅ Package ${args.packageName} installed successfully!`);
-    } catch (error) {
-      this.error(`❌ Error installing package: ${error}`);
+    private installJava(pkg: string, dir: string) {
+        const cmd = `mvn dependency:get -Dartifact=${pkg} -Ddest=${dir}`;
+        execSync(cmd, {cwd: dir, stdio: 'inherit'});
     }
-  }
+
+    private installNode(pkg: string, dir: string) {
+        const pkgJsonPath = path.join(dir, 'package.json');
+        if (!fs.existsSync(pkgJsonPath)) {
+            fs.writeFileSync(pkgJsonPath, JSON.stringify({name: '@razomy/cli-env', version: '1.0.0'}));
+        }
+
+        const nodeExecutable = process.execPath;
+        const npmMainPath = require.resolve('npm');
+        const npmCliPath = path.join(path.dirname(npmMainPath), 'bin', 'npm-cli.js');
+
+        const cmd = `"${nodeExecutable}" "${npmCliPath}" install ${pkg}`;
+        execSync(cmd, {cwd: dir, stdio: 'inherit'});
+    }
+
+
+    private installPython(pkg: string, dir: string) {
+        const pythonExe = process.platform === 'win32' ? 'python' : 'python3';
+        const cmd = `${pythonExe} -m pip install ${pkg} --target .`;
+        execSync(cmd, {cwd: dir, stdio: 'inherit'});
+    }
 }
