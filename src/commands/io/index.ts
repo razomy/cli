@@ -10,15 +10,16 @@ import {loadSpecifications} from "../../lib/io/load-specifications.ts";
 import {createExecutor} from '../../lib/io/module-resolution.ts';
 import {resolveModulePaths} from "../../lib/io/resolve-module-paths.ts";
 import {selectFunction} from '../../lib/io/spec-handling.ts';
+import {defaultPackage} from "../../lib/env/runtime.ts";
 
 export default class IoCommand extends Command {
     static args = {
         modulePath: Args.string({
-            description: 'Path to a local file or npm package name',
+            description: 'Path to package name with function path',
             required: false
         }),
     };
-    static description = 'Dynamically executes a function from a JS module with autocomplete and prompts';
+    static description = 'Dynamically executes a function from a any module with autocomplete and prompts';
     static strict = false;
 
     async run(): Promise<void> {
@@ -27,7 +28,7 @@ export default class IoCommand extends Command {
 
         const cliDataDir = path.join(this.config.dataDir, 'environments', 'node');
         if (!fs.existsSync(cliDataDir)) {
-            this.error(`❌ Node.js environment is not set up or no packages installed.\n💡 Run "mytool install <package>" first.`);
+            this.error(`❌ Node.js environment is not set up or no packages installed.\n💡 Run "razomy cli add ${defaultPackage.packageName}" first.`);
         }
 
         try {

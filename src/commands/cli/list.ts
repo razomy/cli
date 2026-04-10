@@ -1,59 +1,42 @@
 import {Command} from '@oclif/core';
-import {execSync} from 'node:child_process';
 import * as fs from 'node:fs';
-import {createRequire} from 'node:module';
 import path from 'node:path';
 
-const require = createRequire(import.meta.url);
+import {defaultPackage, RuntimesRegistry} from "../../lib/env/runtime.ts";
 
 export default class ListCommand extends Command {
     static description = 'Lists all installed packages across all environments';
 
     async run(): Promise<void> {
         const baseDir = path.join(this.config.dataDir, 'environments');
-        const environments = ['node', 'python', 'java'];
+        const environments = Object.keys(RuntimesRegistry);
         let foundAny = false;
 
-        this.log(`\n🔍 Scanning installed packages...`);
+        this.log(`🔍 Scanning installed packages...`);
 
         for (const env of environments) {
             const envDir = path.join(baseDir, env);
+            const runtimeDir = path.join(this.config.dataDir, 'runtimes', env);
 
             if (!fs.existsSync(envDir)) {
                 continue;
             }
 
             foundAny = true;
-            this.log(`\n📦 --- ${env.toUpperCase()} PACKAGES ---`);
+            this.log(`📦 ${env.toUpperCase()} PACKAGES:`);
 
             try {
-                switch (env) {
-                    case 'java': {
-                        const files = fs.readdirSync(envDir).filter(f => f.endsWith('.jar'));
-                        if (files.length === 0) {
-                            this.log('   (empty)');
-                        } else {
-                            for (const f of files) this.log(`   ├── ${f}`);
-                        }
+                const packages = RuntimesRegistry[env].list(envDir, runtimeDir);
 
-                        break;
+                if (packages.length === 0) {
+                    this.log('   (empty)');
+                } else {
+                    // Отрисовываем каждый элемент
+                    for (const [index, pkg] of packages.entries()) {
+                        const isLast = index === packages.length - 1;
+                        const prefix = isLast ? '   └── ' : '   ├── ';
+                        this.log(`${prefix}${pkg}`);
                     }
-
-                    case 'node': {
-                        const nodeExecutable = process.execPath;
-                        const npmCliPath = path.join(path.dirname(require.resolve('npm')), 'bin', 'npm-cli.js');
-                        execSync(`"${nodeExecutable}" "${npmCliPath}" list --depth=0`, {cwd: envDir, stdio: 'inherit'});
-
-                        break;
-                    }
-
-                    case 'python': {
-                        const pythonExe = process.platform === 'win32' ? 'python' : 'python3';
-                        execSync(`${pythonExe} -m pip freeze --path .`, {cwd: envDir, stdio: 'inherit'});
-
-                        break;
-                    }
-                    // No default
                 }
             } catch {
                 this.log(`   ⚠️ Failed to read ${env} packages. (Maybe the runtime is missing?)`);
@@ -61,10 +44,10 @@ export default class ListCommand extends Command {
         }
 
         if (foundAny) {
-            this.log(`\n✅ Done!`);
+            this.log(`✅ Done!`);
         } else {
-            this.log(`\n📭 No packages installed in any environment yet.`);
-            this.log(`💡 Use "razomy add <package>" to add some!`);
+            this.log(`📭 No packages installed in any environment yet.`);
+            this.log(`💡 Use "razomy cli add ${defaultPackage.packageName}" to add some!`);
         }
     }
 }

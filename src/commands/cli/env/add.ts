@@ -6,25 +6,23 @@ import path from 'node:path';
 import {
     cleanupExtractedStructure,
     createSymlink,
+    defaultPackage,
     downloadFile,
     extractArchive,
     linkExists,
     RuntimesRegistry
 } from "../../../lib/env/runtime.ts";
 
-// ==========================================
-// 2. ОСНОВНОЙ КЛАСС КОМАНДЫ
-// ==========================================
-
 export default class EnvInstall extends Command {
     static args = {
         envName: Args.string({
-            description: 'Which environment to install',
+            default: defaultPackage.envName,
+            description: `Which environment to install (e.g. ${defaultPackage.envName})`,
             options: Object.keys(RuntimesRegistry),
-            required: true,
+            required: false,
         }),
         version: Args.string({
-            description: 'Version to install (if not provided, default version is used)',
+            description: `Version to install (if not provided, default version is used) (e.g. ${RuntimesRegistry[defaultPackage.envName].defaultVersion})`,
             required: false,
         }),
     };
@@ -43,23 +41,19 @@ export default class EnvInstall extends Command {
 
         const provider = RuntimesRegistry[envName];
 
-        // Если версия не указана - берем дефолтную
-        const targetVersion = args.version || provider.defaultVersion;
+        let targetVersion = args.version || provider.defaultVersion;
+        targetVersion = targetVersion.replace(/^v/, '');
 
-        // Базовые пути
         const envBaseDir = path.join(this.config.dataDir, 'runtimes', envName);
         const runtimeDir = path.join(envBaseDir, targetVersion);
         const tempDir = path.join(this.config.dataDir, 'temp');
-        const defaultLinkPath = path.join(envBaseDir, 'default'); // Путь для алиаса 'default'
+        const defaultLinkPath = path.join(envBaseDir, 'default');
 
-        // Флаг: делаем ли мы эту версию дефолтной?
-        // Делаем если: 1) не передали версию руками, 2) передали флаг --set-default, 3) симлинка default еще не существует
         const shouldMakeDefault = !args.version || flags['set-default'] || !linkExists(defaultLinkPath);
 
         if (!fs.existsSync(envBaseDir)) fs.mkdirSync(envBaseDir, {recursive: true});
         if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, {recursive: true});
 
-        // Если версия уже установлена
         if (fs.existsSync(runtimeDir)) {
             this.log(`⚠️  ${envName.toUpperCase()} v${targetVersion} is already installed.`);
             if (shouldMakeDefault) createSymlink(runtimeDir, defaultLinkPath);
@@ -85,7 +79,6 @@ export default class EnvInstall extends Command {
 
             this.log(`✅ ${envName.toUpperCase()} v${targetVersion} installed in: 📂 ${runtimeDir}`);
 
-            // Создаем алиас "default", если нужно
             if (shouldMakeDefault) {
                 createSymlink(runtimeDir, defaultLinkPath);
                 this.log(`🔗 Created alias: 'default' -> v${targetVersion}`);

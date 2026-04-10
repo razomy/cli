@@ -1,8 +1,8 @@
-import { Command } from '@oclif/core';
+import {Command} from '@oclif/core';
 import * as fs from 'node:fs';
 import path from 'node:path';
 
-import {linkExists} from "../../../lib/env/runtime.ts";
+import {defaultPackage, linkExists} from "../../../lib/env/runtime.ts";
 
 export default class EnvList extends Command {
     static description = 'Lists all installed runtime environments and their versions';
@@ -14,7 +14,7 @@ export default class EnvList extends Command {
 
         if (!fs.existsSync(runtimesDir)) {
             this.log('📭 No runtime environments installed yet.');
-            this.log('💡 Run "razomy env add node" to install one.');
+            this.log(`💡 Run "razomy cli env add ${defaultPackage.packageName}" to install one.`);
             return;
         }
 
@@ -25,7 +25,7 @@ export default class EnvList extends Command {
             return;
         }
 
-        this.log('✅ Installed runtimes:\n');
+        this.log('✅ Installed runtimes:');
 
         for (const env of envs) {
             const envDir = path.join(runtimesDir, env);
@@ -61,8 +61,6 @@ export default class EnvList extends Command {
                 const defaultTag = version === defaultVersion ? ' (⭐ default)' : '';
                 this.log(`${prefix} v${version}${defaultTag}`);
             }
-
-            this.log('');
         }
     }
 

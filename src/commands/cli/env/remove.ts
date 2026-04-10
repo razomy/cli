@@ -2,17 +2,17 @@ import {Args, Command} from '@oclif/core';
 import * as fs from 'node:fs';
 import path from 'node:path';
 
-import {linkExists, RuntimesRegistry} from "../../../lib/env/runtime.ts";
+import {defaultPackage, linkExists, RuntimesRegistry} from "../../../lib/env/runtime.ts";
 
 export default class EnvRemove extends Command {
     static args = {
         envName: Args.string({
-            description: 'Which environment to remove',
+            description: `Which environment to remove (e.g. ${defaultPackage.envName})`,
             options: Object.keys(RuntimesRegistry),
             required: true,
         }),
         version: Args.string({
-            description: 'Specific version to remove (optional). If not provided, completely removes the environment.',
+            description: `Specific version to remove (e.g. ${RuntimesRegistry[defaultPackage.envName].defaultVersion}). If not provided, completely removes the environment.`,
             required: false,
         }),
     };
