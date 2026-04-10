@@ -1,135 +1,100 @@
-import {Args, Command} from '@oclif/core';
-import extractZip from 'extract-zip';
+import {Args, Command, Flags} from '@oclif/core';
 import * as fs from 'node:fs';
-import * as https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
-import * as tar from 'tar';
+
+import {
+    cleanupExtractedStructure,
+    createSymlink,
+    downloadFile,
+    extractArchive,
+    linkExists,
+    RuntimesRegistry
+} from "../../../lib/env/runtime.ts";
+
+// ==========================================
+// 2. ОСНОВНОЙ КЛАСС КОМАНДЫ
+// ==========================================
 
 export default class EnvInstall extends Command {
     static args = {
         envName: Args.string({
             description: 'Which environment to install',
-            options: ['node', 'python', 'java'],
+            options: Object.keys(RuntimesRegistry),
             required: true,
         }),
+        version: Args.string({
+            description: 'Version to install (if not provided, default version is used)',
+            required: false,
+        }),
     };
-static description = 'Downloads and installs isolated runtimes (Node.js, Python, Java)';
+    static description = `Downloads and installs isolated runtimes (${Object.keys(RuntimesRegistry)})`;
+    static flags = {
+        'set-default': Flags.boolean({
+            char: 'd',
+            default: false,
+            description: 'Set this version as the default alias',
+        }),
+    };
 
     async run(): Promise<void> {
-        const {args} = await this.parse(EnvInstall);
+        const {args, flags} = await this.parse(EnvInstall);
+        const {envName} = args;
 
-        // Папка для движка (например: dataDir/runtimes/node)
-        const runtimeDir = path.join(this.config.dataDir, 'runtimes', args.envName);
+        const provider = RuntimesRegistry[envName];
 
-        // Временная папка для скачивания архива
+        // Если версия не указана - берем дефолтную
+        const targetVersion = args.version || provider.defaultVersion;
+
+        // Базовые пути
+        const envBaseDir = path.join(this.config.dataDir, 'runtimes', envName);
+        const runtimeDir = path.join(envBaseDir, targetVersion);
         const tempDir = path.join(this.config.dataDir, 'temp');
+        const defaultLinkPath = path.join(envBaseDir, 'default'); // Путь для алиаса 'default'
 
-        if (!fs.existsSync(runtimeDir)) fs.mkdirSync(runtimeDir, {recursive: true});
+        // Флаг: делаем ли мы эту версию дефолтной?
+        // Делаем если: 1) не передали версию руками, 2) передали флаг --set-default, 3) симлинка default еще не существует
+        const shouldMakeDefault = !args.version || flags['set-default'] || !linkExists(defaultLinkPath);
+
+        if (!fs.existsSync(envBaseDir)) fs.mkdirSync(envBaseDir, {recursive: true});
         if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, {recursive: true});
 
+        // Если версия уже установлена
+        if (fs.existsSync(runtimeDir)) {
+            this.log(`⚠️  ${envName.toUpperCase()} v${targetVersion} is already installed.`);
+            if (shouldMakeDefault) createSymlink(runtimeDir, defaultLinkPath);
+            return;
+        }
+
         try {
-            // 1. Получаем правильный URL в зависимости от ОС (Windows, Mac, Linux)
-            const downloadInfo = this.getDownloadInfo(args.envName);
-            const archivePath = path.join(tempDir, downloadInfo.filename);
+            const platform = os.platform();
+            const arch = os.arch();
 
-            this.log(`⏳ Downloading ${args.envName.toUpperCase()} from official servers...`);
-            this.log(`🌐 URL: ${downloadInfo.url}`);
+            const downloadInfo = provider.getDownloadInfo(targetVersion, platform, arch);
+            const archivePath = path.join(tempDir, `${envName}-${targetVersion}-${Date.now()}-${downloadInfo.filename}`);
 
-            // 2. Скачиваем файл
-            await this.downloadFile(downloadInfo.url, archivePath);
-            this.log(`📦 Download complete. Extracting...`);
+            this.log(`⏳ Downloading ${envName.toUpperCase()} v${targetVersion}...`);
+            await downloadFile(downloadInfo.url, archivePath);
 
-            // 3. Распаковываем
-            await this.extractArchive(archivePath, runtimeDir);
+            this.log(`📦 Extracting...`);
+            fs.mkdirSync(runtimeDir, {recursive: true});
+            await extractArchive(archivePath, runtimeDir);
+            await cleanupExtractedStructure(runtimeDir);
 
-            // 4. Удаляем временный архив
             fs.unlinkSync(archivePath);
 
-            this.log(`✅ ${args.envName.toUpperCase()} successfully installed in:`);
-            this.log(`   📂 ${runtimeDir}`);
+            this.log(`✅ ${envName.toUpperCase()} v${targetVersion} installed in: 📂 ${runtimeDir}`);
+
+            // Создаем алиас "default", если нужно
+            if (shouldMakeDefault) {
+                createSymlink(runtimeDir, defaultLinkPath);
+                this.log(`🔗 Created alias: 'default' -> v${targetVersion}`);
+            }
 
         } catch (error) {
+            if (fs.existsSync(runtimeDir)) fs.rmSync(runtimeDir, {force: true, recursive: true});
             const msg = error instanceof Error ? error.message : String(error);
             this.error(`❌ Error installing runtime: ${msg}`);
         }
-    }
-
-    // --- ЛОГИКА СКАЧИВАНИЯ ФАЙЛА (с поддержкой редиректов) ---
-    private downloadFile(url: string, dest: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const request = https.get(url, (response) => {
-                // Обрабатываем редиректы (например, API Adoptium редиректит на github)
-                if ((response.statusCode === 301 || response.statusCode === 302) && response.headers.location) {
-                        return this.downloadFile(response.headers.location, dest).then(resolve).catch(reject);
-                    }
-
-                if (response.statusCode !== 200) {
-                    reject(new Error(`Failed to download, status code: ${response.statusCode}`));
-                    return;
-                }
-
-                const file = fs.createWriteStream(dest);
-                response.pipe(file);
-
-                file.on('finish', () => {
-                    file.close();
-                    resolve();
-                });
-            });
-
-            request.on('error', (err) => {
-                fs.unlink(dest, () => {}); // Удаляем сломанный файл при ошибке
-                reject(err);
-            });
-        });
-    }
-
-    // --- ЛОГИКА РАСПАКОВКИ АРХИВОВ ---
-    private async extractArchive(archivePath: string, destDir: string): Promise<void> {
-        if (archivePath.endsWith('.zip')) {
-            // Извлекаем ZIP (Windows)
-            await extractZip(archivePath, { dir: destDir });
-        } else if (archivePath.endsWith('.tar.gz')) {
-            // Извлекаем TAR.GZ (Mac / Linux)
-            await tar.x({
-                cwd: destDir,
-                file: archivePath,
-            });
-        } else {
-            throw new Error(`Unsupported archive format: ${archivePath}`);
-        }
-    }
-
-    // --- ЛОГИКА ОПРЕДЕЛЕНИЯ ПРАВИЛЬНЫХ ССЫЛОК ---
-    private getDownloadInfo(envName: string): {filename: string; url: string,} {
-        const platform = os.platform(); // 'win32', 'darwin' (mac), 'linux'
-        const arch = os.arch(); // 'x64', 'arm64'
-
-        if (envName === 'node') {
-            const version = 'v20.11.0';
-            if (platform === 'win32') return { filename: 'node.zip', url: `https://nodejs.org/dist/${version}/node-${version}-win-x64.zip` };
-            if (platform === 'darwin') return { filename: 'node.tar.gz', url: `https://nodejs.org/dist/${version}/node-${version}-darwin-x64.tar.gz` };
-            return { filename: 'node.tar.gz', url: `https://nodejs.org/dist/${version}/node-${version}-linux-x64.tar.gz` };
-        }
-
-        if (envName === 'python') {
-            // Для Windows используем официальный Embeddable package.
-            // Для Mac/Linux качаем портативную сборку (indygreg), так как оф. сайт дает только исходники.
-            const version = '3.11.7';
-            if (platform === 'win32') return { filename: 'python.zip', url: `https://www.python.org/ftp/python/${version}/python-${version}-embed-amd64.zip` };
-            if (platform === 'darwin') return { filename: 'python.tar.gz', url: `https://github.com/indygreg/python-build-standalone/releases/download/20240107/cpython-3.11.7+20240107-aarch64-apple-darwin-install_only.tar.gz` };
-            return { filename: 'python.tar.gz', url: `https://github.com/indygreg/python-build-standalone/releases/download/20240107/cpython-3.11.7+20240107-x86_64-unknown-linux-gnu-install_only.tar.gz` };
-        }
-
-        if (envName === 'java') {
-            // Используем API Adoptium (Eclipse Temurin) для получения последней Java 17
-            const version = '17';
-            const osName = platform === 'win32' ? 'windows' : (platform === 'darwin' ? 'mac' : 'linux');
-            const ext = platform === 'win32' ? 'zip' : 'tar.gz';
-            return { filename: `java.${ext}`, url: `https://api.adoptium.net/v3/binary/latest/${version}/ga/${osName}/x64/jdk/normal/eclipse` };
-        }
-
-        throw new Error('Unsupported environment');
     }
 }

@@ -11,29 +11,32 @@
   },
   "bugs": "https://github.com/razomy/cli/issues",
   "dependencies": {
-    "@inquirer/prompts": "^8.3.0",
-    "@oclif/core": "^4",
-    "@oclif/plugin-autocomplete": "^3.2.40",
-    "@oclif/plugin-help": "^6",
-    "@oclif/plugin-plugins": "^5.4.58",
-    "npm": "^11.11.1"
+    "@inquirer/prompts": "^8.4.1",
+    "@oclif/core": "^4.10.5",
+    "@oclif/plugin-autocomplete": "^3.2.45",
+    "@oclif/plugin-help": "^6.2.43",
+    "@oclif/plugin-plugins": "^5.4.60",
+    "extract-zip": "^2.0.1",
+    "npm": "^11.12.1",
+    "tar": "^7.5.13"
   },
   "devDependencies": {
-    "@eslint/compat": "^1",
+    "@eslint/compat": "^2.0.5",
     "@oclif/prettier-config": "^0.2.1",
-    "@oclif/test": "^4",
-    "@types/chai": "^4",
-    "@types/mocha": "^10",
-    "@types/node": "^18",
-    "chai": "^4",
-    "eslint": "^9",
-    "eslint-config-oclif": "^6",
-    "eslint-config-prettier": "^10",
-    "mocha": "^11",
-    "oclif": "^4",
-    "shx": "^0.3.3",
-    "ts-node": "^10",
-    "typescript": "^5"
+    "@oclif/test": "^4.1.18",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.6.0",
+    "@types/tar": "^7.0.87",
+    "chai": "^6.2.2",
+    "eslint": "^10.2.0",
+    "eslint-config-oclif": "^6.0.156",
+    "eslint-config-prettier": "^10.1.8",
+    "mocha": "^11.3.0",
+    "oclif": "^4.23.0",
+    "shx": "^0.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -54,8 +57,7 @@
     "bin": "razomy",
     "dirname": "razomy",
     "commands": "./dist/commands",
-    "binAliases": [
-    ],
+    "binAliases": [],
     "plugins": [],
     "targets": [
       "darwin-x64",

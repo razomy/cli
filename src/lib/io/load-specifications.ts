@@ -1,7 +1,7 @@
 import {existsSync, readFileSync} from "node:fs";
 import {join} from "node:path";
 
-import {FunctionSpecification} from "./function-specification.js";
+import {FunctionSpecification} from "./function-specification.ts";
 
 export function loadSpecifications(moduleDir: string): FunctionSpecification[] {
     const specPath1 = join(moduleDir, 'specifications.json');

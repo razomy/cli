@@ -1,6 +1,6 @@
 import {Command} from "@oclif/core";
 
-import {FunctionSpecification} from "./function-specification.js";
+import {FunctionSpecification} from "./function-specification.ts";
 
 export function printSpecificationInfo(cmd: Command, spec: FunctionSpecification): void {
     const params = spec.parameters.map(i => `${i.name}: ${i.type}`).join(', ');

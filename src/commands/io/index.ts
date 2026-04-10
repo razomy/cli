@@ -3,13 +3,13 @@ import {Args, Command} from '@oclif/core';
 import * as fs from 'node:fs';
 import path from 'node:path';
 
-import {collectParameters} from "./src/collect-parameters.js";
-import {determineModulePath} from "./src/determine-module-path.js";
-import {executeFunction} from './src/execute-function.js';
-import {loadSpecifications} from "./src/load-specifications.js";
-import {createExecutor} from './src/module-resolution.js';
-import {resolveModulePaths} from "./src/resolve-module-paths.js";
-import {selectFunction} from './src/spec-handling.js';
+import {collectParameters} from "../../lib/io/collect-parameters.ts";
+import {determineModulePath} from "../../lib/io/determine-module-path.ts";
+import {executeFunction} from '../../lib/io/execute-function.ts';
+import {loadSpecifications} from "../../lib/io/load-specifications.ts";
+import {createExecutor} from '../../lib/io/module-resolution.ts';
+import {resolveModulePaths} from "../../lib/io/resolve-module-paths.ts";
+import {selectFunction} from '../../lib/io/spec-handling.ts';
 
 export default class IoCommand extends Command {
     static args = {

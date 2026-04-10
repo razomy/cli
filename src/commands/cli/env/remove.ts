@@ -2,33 +2,72 @@ import {Args, Command} from '@oclif/core';
 import * as fs from 'node:fs';
 import path from 'node:path';
 
+import {linkExists, RuntimesRegistry} from "../../../lib/env/runtime.ts";
+
 export default class EnvRemove extends Command {
     static args = {
         envName: Args.string({
             description: 'Which environment to remove',
-            options: ['node', 'python', 'java'],
+            options: Object.keys(RuntimesRegistry),
             required: true,
         }),
+        version: Args.string({
+            description: 'Specific version to remove (optional). If not provided, completely removes the environment.',
+            required: false,
+        }),
     };
-static description = 'Removes an installed runtime environment';
+    static description = 'Removes an installed runtime environment or a specific version';
 
     async run(): Promise<void> {
         const {args} = await this.parse(EnvRemove);
-        const runtimeDir = path.join(this.config.dataDir, 'runtimes', args.envName);
+        const {envName, version} = args;
 
-        this.log(`⏳ Checking ${args.envName.toUpperCase()} runtime...`);
+        const envDir = path.join(this.config.dataDir, 'runtimes', envName);
 
-        if (!fs.existsSync(runtimeDir)) {
-            this.error(`❌ Environment '${args.envName}' is not installed.\nNothing to remove.`);
+        this.log(`⏳ Checking ${envName.toUpperCase()} runtime...`);
+
+        if (!fs.existsSync(envDir)) {
+            this.error(`❌ Environment '${envName}' is not installed.\nNothing to remove.`);
         }
 
         try {
-            this.log(`🗑️  Removing ${args.envName.toUpperCase()} files...`);
+            if (version) {
+                const versionDir = path.join(envDir, version);
 
-            // Удаляем папку рекурсивно (аналог rm -rf)
-            fs.rmSync(runtimeDir, { force: true, recursive: true });
+                if (!fs.existsSync(versionDir)) {
+                    this.error(`❌ Version '${version}' of '${envName}' is not installed.`);
+                }
 
-            this.log(`✅ ${args.envName.toUpperCase()} successfully removed!`);
+                this.log(`🗑️  Removing ${envName.toUpperCase()} v${version}...`);
+                fs.rmSync(versionDir, {force: true, recursive: true});
+
+                const defaultLinkPath = path.join(envDir, 'default');
+                if (linkExists(defaultLinkPath)) {
+                    try {
+                        const realPath = fs.realpathSync(defaultLinkPath);
+                        if (realPath === versionDir) {
+                            fs.rmSync(defaultLinkPath, {force: true, recursive: true});
+                            this.log(`⚠️  The default version was removed. 'default' alias cleared.`);
+                        }
+                    } catch {
+                        // Симлинк сломался (мы только что удалили его цель) - чистим мусор
+                        fs.rmSync(defaultLinkPath, {force: true, recursive: true});
+                    }
+                }
+
+                this.log(`✅ ${envName.toUpperCase()} v${version} successfully removed!`);
+
+                const remainingItems = fs.readdirSync(envDir);
+                if (remainingItems.length === 0 || (remainingItems.length === 1 && remainingItems[0] === 'default')) {
+                    fs.rmSync(envDir, {force: true, recursive: true});
+                }
+
+            } else {
+                this.log(`🗑️  Removing ALL versions of ${envName.toUpperCase()}...`);
+                fs.rmSync(envDir, {force: true, recursive: true});
+                this.log(`✅ ${envName.toUpperCase()} completely removed!`);
+            }
+
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             this.error(`❌ Error removing environment: ${msg}`);

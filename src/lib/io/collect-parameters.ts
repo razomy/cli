@@ -1,7 +1,7 @@
 import {input} from "@inquirer/prompts";
 import {Command} from "@oclif/core";
 
-import {FunctionSpecification} from "./function-specification.js";
+import {FunctionSpecification} from "./function-specification.ts";
 
 export async function collectParameters(cmd: Command, spec: FunctionSpecification | undefined, args: string[]): Promise<string[]> {
     const finalParams: string[] = [];

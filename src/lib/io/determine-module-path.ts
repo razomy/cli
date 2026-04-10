@@ -1,6 +1,6 @@
 import {search} from "@inquirer/prompts";
 
-import {getInstalledPackages} from "./get-installed-packages.js";
+import {getInstalledPackages} from "./get-installed-packages.ts";
 
 export async function determineModulePath(cliDataDir: string, providedArg?: string): Promise<string> {
     const installedPackages = getInstalledPackages(cliDataDir);

@@ -1,8 +1,8 @@
 import {select} from '@inquirer/prompts';
 import {Command} from '@oclif/core';
 
-import {FunctionSpecification} from './function-specification.js';
-import {printSpecificationInfo} from "./print-specification-info.js";
+import {FunctionSpecification} from './function-specification.ts';
+import {printSpecificationInfo} from "./print-specification-info.ts";
 
 export async function selectFunction(cmd: Command, specs: FunctionSpecification[], args: string[]) {
   if (specs.length === 0) {

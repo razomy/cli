@@ -1,38 +1,69 @@
-import {Command} from '@oclif/core';
+import { Command } from '@oclif/core';
 import * as fs from 'node:fs';
 import path from 'node:path';
 
+import {linkExists} from "../../../lib/env/runtime.ts";
+
 export default class EnvList extends Command {
-    static description = 'Lists all installed runtime environments';
+    static description = 'Lists all installed runtime environments and their versions';
 
     async run(): Promise<void> {
         const runtimesDir = path.join(this.config.dataDir, 'runtimes');
 
-        this.log(`\n🔍 Scanning installed environments...`);
+        this.log(`🔍 Scanning installed environments...`);
 
-        // Если папки runtimes вообще нет, значит ничего не установлено
         if (!fs.existsSync(runtimesDir)) {
             this.log('📭 No runtime environments installed yet.');
             this.log('💡 Run "razomy env add node" to install one.');
             return;
         }
 
-        // Читаем содержимое папки
-        const items = fs.readdirSync(runtimesDir);
-        const installedEnvs = items.filter(item => {
-            const itemPath = path.join(runtimesDir, item);
-            return fs.statSync(itemPath).isDirectory(); // берем только папки
-        });
+        const envs = fs.readdirSync(runtimesDir).filter(item => fs.statSync(path.join(runtimesDir, item)).isDirectory());
 
-        if (installedEnvs.length === 0) {
+        if (envs.length === 0) {
             this.log('📭 No runtime environments installed yet.');
             return;
         }
 
-        // Выводим список
-        this.log('✅ Installed runtimes:');
-        for (const env of installedEnvs) {
-            this.log(`   🚀 ${env.toUpperCase()} -> ${path.join(runtimesDir, env)}`);
+        this.log('✅ Installed runtimes:\n');
+
+        for (const env of envs) {
+            const envDir = path.join(runtimesDir, env);
+            const items = fs.readdirSync(envDir);
+
+            let defaultVersion: null | string = null;
+            const defaultLinkPath = path.join(envDir, 'default');
+
+            if (linkExists(defaultLinkPath)) {
+                try {
+                    const realPath = fs.realpathSync(defaultLinkPath);
+                    defaultVersion = path.basename(realPath);
+                } catch {
+                    defaultVersion = 'broken';
+                }
+            }
+
+            const versions = items.filter(item => {
+                if (item === 'default') return false;
+                const itemPath = path.join(envDir, item);
+                return fs.lstatSync(itemPath).isDirectory();
+            });
+
+            this.log(`📦 ${env.toUpperCase()}`);
+            if (versions.length === 0) {
+                this.log(`   └─ (empty)`);
+                continue;
+            }
+
+            for (const [index, version] of versions.entries()) {
+                const isLast = index === versions.length - 1;
+                const prefix = isLast ? '   └─' : '   ├─';
+                const defaultTag = version === defaultVersion ? ' (⭐ default)' : '';
+                this.log(`${prefix} v${version}${defaultTag}`);
+            }
+
+            this.log('');
         }
     }
+
 }
