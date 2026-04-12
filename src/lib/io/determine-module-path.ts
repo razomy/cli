@@ -2,11 +2,11 @@ import {search} from "@inquirer/prompts";
 
 import {getInstalledPackages} from "./get-installed-packages.ts";
 
-export async function determineModulePath(cliDataDir: string, providedArg?: string): Promise<string> {
-    const installedPackages = getInstalledPackages(cliDataDir);
+export async function determineModulePath(defaultWorkspaceDir: string, providedArg?: string): Promise<string> {
+    const installedPackages = getInstalledPackages(defaultWorkspaceDir);
 
     if (providedArg) {
-        const filteredPackages = installedPackages.find(pkg => pkg.toLowerCase().includes(providedArg));
+        const filteredPackages = installedPackages.find(packageName => packageName.toLowerCase().includes(providedArg));
         return filteredPackages || providedArg;
     }
 
@@ -15,8 +15,8 @@ export async function determineModulePath(cliDataDir: string, providedArg?: stri
         async source(searchTerm) {
             const term = (searchTerm || '').toLowerCase();
             const filteredPackages = installedPackages
-                .filter(pkg => pkg.toLowerCase().includes(term))
-                .map(pkg => ({name: `📦 ${pkg}`, value: pkg}));
+                .filter(packageName => packageName.toLowerCase().includes(term))
+                .map(packageName => ({name: `📦 ${packageName}`, value: packageName}));
 
             if (term.length > 0) {
                 filteredPackages.unshift({

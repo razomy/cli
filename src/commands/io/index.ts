@@ -5,12 +5,11 @@ import path from 'node:path';
 
 import {collectParameters} from "../../lib/io/collect-parameters.ts";
 import {determineModulePath} from "../../lib/io/determine-module-path.ts";
-import {executeFunction} from '../../lib/io/execute-function.ts';
+import {runFunction} from '../../lib/io/run-function.ts';
 import {loadSpecifications} from "../../lib/io/load-specifications.ts";
-import {createExecutor} from '../../lib/io/module-resolution.ts';
-import {resolveModulePaths} from "../../lib/io/resolve-module-paths.ts";
 import {selectFunction} from '../../lib/io/spec-handling.ts';
-import {defaultPackage} from "../../lib/env/runtime.ts";
+import {defaultPackage} from "../../lib/runtime/runtime.ts";
+import {resolveFilePathOrPackageName} from "@razomy/run";
 
 export default class IoCommand extends Command {
     static args = {
@@ -26,23 +25,32 @@ export default class IoCommand extends Command {
         const {args, argv} = await this.parse(IoCommand);
         const dynamicArgs = argv.slice(1) as string[];
 
-        const cliDataDir = path.join(this.config.dataDir, 'environments', 'node');
-        if (!fs.existsSync(cliDataDir)) {
+        const runtime = 'node';
+        const defaultWorkspaceDir = path.join(this.config.dataDir, 'cli', 'workspaces', runtime, 'default');
+        const defaultRuntimeDir = path.join(this.config.dataDir, 'cli', 'runtimes', runtime, 'default');
+
+        if (!fs.existsSync(defaultWorkspaceDir)) {
             this.error(`❌ Node.js environment is not set up or no packages installed.\n💡 Run "razomy cli add ${defaultPackage.packageName}" first.`);
         }
 
         try {
-            const targetModulePath = await determineModulePath(cliDataDir, args.modulePath);
-            this.log(`\n📦 Preparing module: ${targetModulePath}...`);
+            const packageName = await determineModulePath(defaultWorkspaceDir, args.modulePath);
+            this.log(`\n📦 Preparing module: ${packageName}...`);
 
-            const {importPath, moduleDir} = resolveModulePaths(cliDataDir, targetModulePath);
+            const {importPath, moduleDir} = resolveFilePathOrPackageName(defaultWorkspaceDir, packageName);
             const specs = loadSpecifications(moduleDir);
 
             const {functionNameToRun, remainingArgs, selectedSpec} = await selectFunction(this, specs, dynamicArgs);
-            const finalParams = await collectParameters(this, selectedSpec, remainingArgs);
-            const fileUrl = await createExecutor(importPath, moduleDir);
+            const finalParams = JSON.stringify(await collectParameters(this, selectedSpec, remainingArgs));
 
-            await executeFunction(this, fileUrl, functionNameToRun, finalParams);
+            await runFunction(this,
+                runtime,
+                defaultWorkspaceDir,
+                defaultRuntimeDir,
+                packageName,
+                functionNameToRun,
+                finalParams,
+            );
         } catch (error: unknown) {
             this.handleExecutionError(error, args.modulePath || 'Unknown Module');
         }
@@ -55,8 +63,8 @@ export default class IoCommand extends Command {
             this.error(`Module "${modulePath}" not found.`);
         } else {
             // Лучше выводить сообщение об ошибке безопасно
-            const msg = error instanceof Error ? error.message : String(error);
-            this.error(`Execution error: ${msg}`);
+            const message = error instanceof Error ? error.message : String(error);
+            this.error(`Execution error: ${message}`);
         }
     }
 }

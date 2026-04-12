@@ -1,7 +1,7 @@
 {
   "name": "@razomy/cli",
   "description": "A new CLI generated with oclif",
-  "version": "0.0.0-alpha.3",
+  "version": "0.0.0-alpha.4",
   "author": "Yevhenii Kamenskyi",
   "bin": {
     "razomy": "bin/run.js"
@@ -14,11 +14,13 @@
     "@inquirer/prompts": "^8.4.1",
     "@oclif/core": "^4.10.5",
     "@oclif/plugin-autocomplete": "^3.2.45",
-    "@oclif/plugin-help": "^6.2.43",
+    "@oclif/plugin-help": "^6.2.44",
     "@oclif/plugin-plugins": "^5.4.60",
     "extract-zip": "^2.0.1",
     "npm": "^11.12.1",
-    "tar": "^7.5.13"
+    "tar": "^7.5.13",
+    "@razomy/run": "^0.0.1-alpha.1",
+    "@razomy/exceptions": "^0.0.1-alpha.4"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.5",
@@ -30,7 +32,7 @@
     "@types/tar": "^7.0.87",
     "chai": "^6.2.2",
     "eslint": "^10.2.0",
-    "eslint-config-oclif": "^6.0.156",
+    "eslint-config-oclif": "^6.0.157",
     "eslint-config-prettier": "^10.1.8",
     "mocha": "^11.3.0",
     "oclif": "^4.23.0",
@@ -57,25 +59,27 @@
     "bin": "razomy",
     "dirname": "razomy",
     "commands": "./dist/commands",
-    "binAliases": [],
+    "binAliases": [
+      "r"
+    ],
     "plugins": [],
     "targets": [
       "darwin-x64",
       "darwin-arm64",
       "linux-x64",
-      "linux-arm",
+      "linux-arm64",
       "win32-x64"
     ],
     "topicSeparator": " ",
     "topics": {
       "io": {
-        "description": "Run npm packages commands"
+        "description": "Run npm packages functions"
       },
-      "ai": {
-        "description": "Run ai agent to execute commands"
+      "di": {
+        "description": "Run DI agent to execute commands"
       },
       "cli": {
-        "description": "Install npm packages"
+        "description": "Install npm packages in different workspaces with different runtimes"
       }
     }
   },

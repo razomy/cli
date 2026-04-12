@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-INSTALL_DIR="/usr/local/lib/razomy"
+INSTALL_DIR="/usr/local/lib/razomy/cli"
 
 echo "🗑️ Uninstalling Razomy CLI..."
 
@@ -11,7 +11,7 @@ if [ -d "$INSTALL_DIR/bin" ]; then
 
     # Loop through the bin folder to dynamically find and remove every alias
     for cmd in "$INSTALL_DIR/bin/"*; do
-        # Extract just the filename (e.g., 'razomy', 'rr', 'r')
+        # Extract just the filename (e.g., 'razomy', 'r')
         cmd_name=$(basename "$cmd")
 
         # If the symlink exists in the system bin folder, delete it

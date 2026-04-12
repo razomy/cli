@@ -2,35 +2,35 @@ import {Args, Command, Flags} from '@oclif/core';
 import * as fs from 'node:fs';
 import path from 'node:path';
 
-import {defaultPackage, RuntimesRegistry} from "../../lib/env/runtime.ts";
+import {defaultPackage, RuntimeRegistry} from "../../lib/runtime/runtime.ts";
 
-export default class UninstallCommand extends Command {
+export default class RemovePackageCommand extends Command {
     static args = {
         packageName: Args.string({required: true}),
     };
-    static description = 'Uninstalls a package from the environment';
+    static description = 'Uninstalls a package from the workspace';
     static flags = {
-        env: Flags.string({
-            char: 'e',
-            default: defaultPackage.envName,
-            description: `Target environment (e.g. ${defaultPackage.envName})`,
-            options: Object.keys(RuntimesRegistry),
+        runtime: Flags.string({
+            char: 'r',
+            default: defaultPackage.runtimeName,
+            description: `Target runtime (e.g. ${defaultPackage.runtimeName})`,
+            options: Object.keys(RuntimeRegistry),
         }),
     };
 
     async run(): Promise<void> {
-        const {args, flags} = await this.parse(UninstallCommand);
-        const envDir = path.join(this.config.dataDir, 'environments', flags.env);
-        const runtimeDir = path.join(this.config.dataDir, 'runtimes', flags.env);
+        const {args, flags} = await this.parse(RemovePackageCommand);
+        const defaultRuntimeDir = path.join(this.config.dataDir, 'cli', 'runtimes', flags.runtime, 'default');
+        const defaultWorkspaceDir = path.join(this.config.dataDir, 'cli', 'workspaces', flags.runtime, 'default');
 
-        if (!fs.existsSync(envDir)) {
-            this.error(`❌ Environment ${flags.env} is empty.`);
+        if (!fs.existsSync(defaultRuntimeDir)) {
+            this.error(`❌ Runtime ${flags.runtime} is empty.`);
         }
 
-        this.log(`⏳ Uninstalling [${flags.env}] package: ${args.packageName}...`);
+        this.log(`⏳ Uninstalling [${flags.runtime}] package: ${args.packageName}...`);
 
         try {
-            RuntimesRegistry[flags.env].remove(args.packageName, envDir, runtimeDir);
+            RuntimeRegistry[flags.runtime].remove(args.packageName, defaultWorkspaceDir, defaultRuntimeDir);
             this.log(`✅ Package ${args.packageName} uninstalled!`);
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
