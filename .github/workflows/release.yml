@@ -24,9 +24,7 @@ jobs:
 
       - run: npm run prepack
 
-      - run: npm publish --tag latest --release --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm publish --tag latest --provenance
 
       - run: npm run postpack
 
