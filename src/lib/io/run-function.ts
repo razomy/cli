@@ -11,7 +11,7 @@ export async function runFunction(cmd: Command,
                                   functionName: string,
                                   params: string): Promise<void> {
     cmd.log('🚀 Executing...');
-    let result: unknown;
+    let result: string;
     try {
         result = await RuntimeRegistry[runtime].run(defaultWorkspaceDir, versionRuntimeDir, packageName, functionName, params);
     } catch (error) {
@@ -21,7 +21,7 @@ export async function runFunction(cmd: Command,
 
     cmd.log('✅ Execution completed successfully!');
     cmd.log('Result:');
-    cmd.log(result as never);
+    cmd.log(result);
 }
 
 /**

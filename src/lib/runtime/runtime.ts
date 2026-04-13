@@ -23,7 +23,7 @@ interface RuntimeProvider {
 
     remove(packageName: string, versionWorkspaceDir: string, versionRuntimeDir: string): void;
 
-    run(versionWorkspaceDir: string, versionRuntimeDir: string, packageName: string, functionName: string, params: string): Promise<any>;
+    run(versionWorkspaceDir: string, versionRuntimeDir: string, packageName: string, functionName: string, params: string): Promise<string>;
 
     setup(versionWorkspaceDir: string, runtime: string): void;
 }
