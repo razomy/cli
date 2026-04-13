@@ -19,26 +19,26 @@ jobs:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
 
-      - run: npm install
-
-      - run: npm run build
-
-      - run: npm run prepack
-
-      - run: npm publish --tag latest --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: npm run postpack
-
-      - name: Pack Tarballs
-        run: npx oclif pack:tarballs
-
-      - name: Pack Debian
-        run: npx oclif pack:deb
-
-      - name: Generate SHA256 Hashes
-        run: shasum -a 256 dist/*.tar.gz
+#      - run: npm install
+#
+#      - run: npm run build
+#
+#      - run: npm run prepack
+#
+#      - run: npm publish --tag latest --access public --provenance
+#        env:
+#          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - run: npm run postpack
+#
+#      - name: Pack Tarballs
+#        run: npx oclif pack:tarballs
+#
+#      - name: Pack Debian
+#        run: npx oclif pack:deb
+#
+#      - name: Generate SHA256 Hashes
+#        run: shasum -a 256 dist/*.tar.gz
 
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v1
@@ -70,10 +70,9 @@ jobs:
           mkdir -p tap/Formula
           
           # МАГИЯ ЗДЕСЬ: envsubst берет ваш шаблон, подставляет переменные и сохраняет в tap!
-          envsubst < .github/razomy.rb.template > tap/Formula/razomy.rb
+          envsubst < /Formula/razomy.rb.template > /Formula/razomy.rb
           
           # Пушим
-          cd tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/razomy.rb
