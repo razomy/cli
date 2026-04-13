@@ -70,9 +70,10 @@ jobs:
           mkdir -p tap/Formula
           
           # МАГИЯ ЗДЕСЬ: envsubst берет ваш шаблон, подставляет переменные и сохраняет в tap!
-          envsubst < /Formula/razomy.rb.template > /Formula/razomy.rb
+          envsubst < /tap/Formula/razomy.rb.template > /tap/Formula/razomy.rb
           
           # Пушим
+          cd tap
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/razomy.rb
