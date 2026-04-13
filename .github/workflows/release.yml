@@ -24,7 +24,9 @@ jobs:
 
       - run: npm run prepack
 
-      - run: npm publish --tag latest --provenance
+      - run: npm publish --tag latest --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: npm run postpack
 
