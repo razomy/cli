@@ -70,7 +70,7 @@ jobs:
           mkdir -p tap/Formula
           
           # МАГИЯ ЗДЕСЬ: envsubst берет ваш шаблон, подставляет переменные и сохраняет в tap!
-          envsubst < /tap/Formula/razomy.rb.template > /tap/Formula/razomy.rb
+          envsubst < tap/Formula/razomy.rb.template > tap/Formula/razomy.rb
           
           # Пушим
           cd tap
