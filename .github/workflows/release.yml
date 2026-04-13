@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -45,20 +46,3 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.deb
-
-      - name: Setup Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-
-      - name: Update Homebrew Tap Natively
-        env:
-          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
-        run: |
-          VERSION=${GITHUB_REF_NAME#v}
-          brew tap razomy/tap https://${TAP_GITHUB_TOKEN}@github.com/razomy/homebrew-tap.git
-          brew bump-formula-pr --write-only --version=${VERSION} razomy
-          cd $(brew --repo razomy/tap)
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -am "Bump razomy to ${VERSION}"
-          git push

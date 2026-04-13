@@ -3,40 +3,39 @@ set -e
 
 REPO="razomy/cli"
 
-echo "🔍 Finding latest version..."
-# Dynamically fetch the latest release tag from GitHub (removes the 'v' prefix)
-VERSION=$(curl -s "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-
-if [ -z "$VERSION" ]; then
-  echo "❌ Failed to fetch latest version. Exiting."
-  exit 1
-fi
-
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"
 if [ "$ARCH" = "x86_64" ]; then ARCH="x64"; fi
 if [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi
 
-# Oclif names files with a 'v' before the version
-FILENAME="razomy-v${VERSION}-${OS}-${ARCH}.tar.gz"
-URL="https://github.com/${REPO}/releases/download/v${VERSION}/${FILENAME}"
+echo "🔍 Finding latest release for ${OS}-${ARCH}..."
 
-# The folder inside the tarball matches the filename without .tar.gz
-EXTRACTED_DIR="razomy-v${VERSION}-${OS}-${ARCH}"
+ASSET_URL=$(curl -s "https://api.github.com/repos/${REPO}/releases" \
+  | grep '"browser_download_url":' \
+  | grep "${OS}-${ARCH}\.tar\.gz" \
+  | cut -d '"' -f 4 \
+  | head -n 1)
 
-echo "⬇️  Downloading Razomy CLI v${VERSION} for ${OS}-${ARCH}..."
-curl -L -o razomy.tar.gz "$URL"
+if [ -z "$ASSET_URL" ]; then
+  echo "❌ Failed to find a matching release asset for ${OS}-${ARCH}."
+  exit 1
+fi
+
+VERSION=$(echo "$ASSET_URL" | awk -F'/' '{print $(NF-1)}')
+
+echo "⬇️  Downloading Razomy CLI ${VERSION} from: $ASSET_URL"
+curl -L -o razomy.tar.gz "$ASSET_URL"
 
 echo "📦 Unpacking..."
-tar -xzf razomy.tar.gz
+rm -rf /tmp/razomy-extract
+mkdir -p /tmp/razomy-extract
+tar -xzf razomy.tar.gz -C /tmp/razomy-extract --strip-components=1
 
 echo "🚚 Moving to /usr/local/lib..."
-# Remove older version if it exists
 sudo rm -rf /usr/local/lib/razomy/cli
 sudo mkdir -p /usr/local/lib/razomy
 
-# Move the exact extracted folder
-sudo mv "$EXTRACTED_DIR" /usr/local/lib/razomy/cli
+sudo mv /tmp/razomy-extract /usr/local/lib/razomy/cli
 
 echo "🔗 Setting up commands and aliases..."
 for cmd in /usr/local/lib/razomy/cli/bin/*; do
@@ -44,7 +43,6 @@ for cmd in /usr/local/lib/razomy/cli/bin/*; do
   sudo ln -sf "$cmd" "/usr/local/bin/$cmd_name"
 done
 
-# Clean up the downloaded file
 rm razomy.tar.gz
 
 echo "✅ Installation complete!"
